@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
-import { properties } from "@/data/properties";
+import { useFeaturedProperties } from "@/hooks/useProperties";
 import { useState } from "react";
 
 const stats = [
@@ -21,7 +21,7 @@ const values = [
 ];
 
 export default function HomePage() {
-  const featured = properties.filter((p) => p.featured).slice(0, 6);
+  const { data: featured = [], isLoading } = useFeaturedProperties();
   const [heroSearch, setHeroSearch] = useState("");
 
   return (
@@ -88,11 +88,19 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((p) => (
-            <PropertyCard key={p.id} property={p} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-96 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((p) => (
+              <PropertyCard key={p.id} property={p} />
+            ))}
+          </div>
+        )}
         <div className="mt-8 text-center sm:hidden">
           <Link to="/properti">
             <Button>Lihat Semua Properti</Button>
