@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import SearchFilter from "@/components/SearchFilter";
-import { properties } from "@/data/properties";
+import { useProperties } from "@/hooks/useProperties";
 
 const PAGE_SIZE = 9;
 
@@ -17,6 +17,8 @@ export default function PropertiPage() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(1);
 
+  const { data: properties = [], isLoading } = useProperties();
+
   const filtered = useMemo(() => {
     return properties.filter((p) => {
       if (type && p.type !== type) return false;
@@ -26,7 +28,7 @@ export default function PropertiPage() {
       if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !p.location.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [type, kecamatan, minPrice, maxPrice, search]);
+  }, [properties, type, kecamatan, minPrice, maxPrice, search]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice(0, page * PAGE_SIZE);
@@ -48,13 +50,21 @@ export default function PropertiPage() {
           />
         </div>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {paginated.map((p) => (
-            <PropertyCard key={p.id} property={p} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-96 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {paginated.map((p) => (
+              <PropertyCard key={p.id} property={p} />
+            ))}
+          </div>
+        )}
 
-        {paginated.length === 0 && (
+        {!isLoading && paginated.length === 0 && (
           <p className="py-20 text-center text-muted-foreground">Tidak ada properti yang sesuai filter.</p>
         )}
 

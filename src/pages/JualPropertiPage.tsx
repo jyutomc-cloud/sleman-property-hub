@@ -4,13 +4,14 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { formatPrice } from "@/data/properties";
+import { formatPrice, insertProperty } from "@/data/properties";
 
 interface FormData {
-  type: string;
+  type: "rumah" | "tanah";
   title: string;
   price: string;
   location: string;
+  kecamatan: string;
   landArea: string;
   buildingArea: string;
   bedrooms: string;
@@ -20,8 +21,10 @@ interface FormData {
   sellerPhone: string;
 }
 
+const kecamatanList = ["Ngaglik", "Depok", "Gamping", "Mlati", "Tempel", "Turi", "Seyegan", "Berbah"];
+
 const initial: FormData = {
-  type: "rumah", title: "", price: "", location: "",
+  type: "rumah", title: "", price: "", location: "", kecamatan: "",
   landArea: "", buildingArea: "", bedrooms: "", bathrooms: "",
   description: "", sellerName: "", sellerPhone: "",
 };
@@ -31,6 +34,7 @@ export default function JualPropertiPage() {
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
   const set = (key: keyof FormData, value: string) => {
@@ -59,6 +63,7 @@ export default function JualPropertiPage() {
     if (!form.title.trim()) e.title = "Judul wajib diisi";
     if (!form.price || Number(form.price) <= 0) e.price = "Harga wajib diisi";
     if (!form.location.trim()) e.location = "Lokasi wajib diisi";
+    if (!form.kecamatan) e.kecamatan = "Kecamatan wajib dipilih";
     if (!form.landArea || Number(form.landArea) <= 0) e.landArea = "Luas tanah wajib diisi";
     if (form.description.length < 50) e.description = "Deskripsi minimal 50 karakter";
     if (!form.sellerName.trim()) e.sellerName = "Nama wajib diisi";
@@ -67,14 +72,37 @@ export default function JualPropertiPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast.error("Mohon lengkapi semua field yang wajib diisi");
       return;
     }
-    setSubmitted(true);
-    toast.success("Properti berhasil disubmit! Tim kami akan meninjau iklan Anda.");
+    setIsSubmitting(true);
+    try {
+      await insertProperty({
+        title: form.title,
+        type: form.type,
+        price: Number(form.price),
+        location: form.location,
+        kecamatan: form.kecamatan,
+        landArea: Number(form.landArea),
+        buildingArea: form.buildingArea ? Number(form.buildingArea) : undefined,
+        bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
+        bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
+        description: form.description,
+        longDescription: form.description,
+        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"],
+        sellerName: form.sellerName,
+        sellerPhone: form.sellerPhone,
+      });
+      setSubmitted(true);
+      toast.success("Properti berhasil disubmit!");
+    } catch (err) {
+      toast.error("Gagal menyimpan properti. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -84,7 +112,7 @@ export default function JualPropertiPage() {
         <div className="container flex flex-col items-center justify-center py-20 text-center">
           <CheckCircle className="h-16 w-16 text-primary" />
           <h2 className="mt-4 text-2xl font-bold">Properti Berhasil Disubmit!</h2>
-          <p className="mt-2 text-muted-foreground">Tim kami akan meninjau iklan Anda dalam 1x24 jam.</p>
+          <p className="mt-2 text-muted-foreground">Properti Anda sudah tersimpan di database dan langsung tayang.</p>
           <Button className="mt-6" onClick={() => { setSubmitted(false); setForm(initial); setImages([]); }}>
             Tambah Properti Lain
           </Button>
@@ -102,16 +130,25 @@ export default function JualPropertiPage() {
       <Navbar />
       <div className="container max-w-3xl py-8">
         <h1 className="text-2xl font-bold sm:text-3xl">Jual Properti</h1>
-        <p className="mt-1 text-muted-foreground">Pasang iklan properti Anda secara gratis</p>
+        <p className="mt-1 text-muted-foreground">Pasang iklan properti Anda secara gratis — langsung tersimpan di database</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {/* Type */}
-          <div>
-            <label className="text-sm font-medium">Tipe Properti *</label>
-            <select value={form.type} onChange={(e) => set("type", e.target.value)} className={inputCls + " mt-1"}>
-              <option value="rumah">Rumah</option>
-              <option value="tanah">Tanah</option>
-            </select>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium">Tipe Properti *</label>
+              <select value={form.type} onChange={(e) => set("type", e.target.value as "rumah" | "tanah")} className={inputCls + " mt-1"}>
+                <option value="rumah">Rumah</option>
+                <option value="tanah">Tanah</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Kecamatan *</label>
+              <select value={form.kecamatan} onChange={(e) => set("kecamatan", e.target.value)} className={inputCls + " mt-1"}>
+                <option value="">Pilih Kecamatan</option>
+                {kecamatanList.map((k) => <option key={k} value={k}>{k}</option>)}
+              </select>
+              {errors.kecamatan && <p className={errorCls}>{errors.kecamatan}</p>}
+            </div>
           </div>
 
           <div>
@@ -167,7 +204,6 @@ export default function JualPropertiPage() {
             {errors.description && <p className={errorCls}>{errors.description}</p>}
           </div>
 
-          {/* Images */}
           <div>
             <label className="text-sm font-medium">Foto Properti (max 10)</label>
             <div className="mt-2 rounded-lg border-2 border-dashed p-6 text-center">
@@ -189,7 +225,6 @@ export default function JualPropertiPage() {
             )}
           </div>
 
-          {/* Seller info */}
           <div className="rounded-lg border bg-accent/50 p-4">
             <h3 className="font-semibold">Data Penjual</h3>
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -210,7 +245,9 @@ export default function JualPropertiPage() {
             <Button type="button" variant="outline" onClick={() => { if (validate()) setShowPreview(!showPreview); }}>
               {showPreview ? "Tutup Preview" : "Preview"}
             </Button>
-            <Button type="submit">Submit Properti</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Menyimpan..." : "Submit Properti"}
+            </Button>
           </div>
         </form>
 
