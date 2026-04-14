@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      properties: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          building_area: number | null
+          created_at: string
+          description: string
+          featured: boolean
+          id: string
+          images: string[]
+          kecamatan: string
+          land_area: number
+          location: string
+          long_description: string
+          price: number
+          seller_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["property_type"]
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_area?: number | null
+          created_at?: string
+          description: string
+          featured?: boolean
+          id?: string
+          images?: string[]
+          kecamatan: string
+          land_area: number
+          location: string
+          long_description: string
+          price: number
+          seller_id?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["property_type"]
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          building_area?: number | null
+          created_at?: string
+          description?: string
+          featured?: boolean
+          id?: string
+          images?: string[]
+          kecamatan?: string
+          land_area?: number
+          location?: string
+          long_description?: string
+          price?: number
+          seller_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["property_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sellers: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string
+          photo: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+          photo?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+          photo?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +114,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      property_type: "rumah" | "tanah"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +241,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      property_type: ["rumah", "tanah"],
+    },
   },
 } as const
