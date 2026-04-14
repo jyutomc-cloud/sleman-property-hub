@@ -55,7 +55,7 @@ export default function PropertyCard({ property }: { property: Property }) {
 
         <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{property.description}</p>
 
-        <a
+        {property.seller && <
           href={getWhatsAppUrl(property.seller.phone, property.title)}
           target="_blank"
           rel="noopener noreferrer"
