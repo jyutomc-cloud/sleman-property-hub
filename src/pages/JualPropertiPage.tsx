@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { formatPrice, insertProperty } from "@/data/properties";
+import { uploadMultipleImages } from "@/lib/uploadImage";
 
 interface FormData {
   type: "rumah" | "tanah";
@@ -31,7 +32,8 @@ const initial: FormData = {
 
 export default function JualPropertiPage() {
   const [form, setForm] = useState<FormData>(initial);
-  const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,18 +47,23 @@ export default function JualPropertiPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    if (images.length + files.length > 10) {
+    if (imageFiles.length + files.length > 10) {
       toast.error("Maksimal 10 foto");
       return;
     }
-    Array.from(files).forEach((file) => {
+    const newFiles = Array.from(files);
+    setImageFiles((prev) => [...prev, ...newFiles]);
+    newFiles.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (ev) => setImages((prev) => [...prev, ev.target?.result as string]);
+      reader.onload = (ev) => setImagePreviews((prev) => [...prev, ev.target?.result as string]);
       reader.readAsDataURL(file);
     });
   };
 
-  const removeImage = (idx: number) => setImages((prev) => prev.filter((_, i) => i !== idx));
+  const removeImage = (idx: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormData, string>> = {};
@@ -80,6 +87,13 @@ export default function JualPropertiPage() {
     }
     setIsSubmitting(true);
     try {
+      let imageUrls: string[] = ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"];
+      
+      if (imageFiles.length > 0) {
+        toast.info("Mengupload gambar...");
+        imageUrls = await uploadMultipleImages(imageFiles);
+      }
+
       await insertProperty({
         title: form.title,
         type: form.type,
@@ -92,7 +106,7 @@ export default function JualPropertiPage() {
         bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
         description: form.description,
         longDescription: form.description,
-        images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"],
+        images: imageUrls,
         sellerName: form.sellerName,
         sellerPhone: form.sellerPhone,
       });
@@ -112,8 +126,8 @@ export default function JualPropertiPage() {
         <div className="container flex flex-col items-center justify-center py-20 text-center">
           <CheckCircle className="h-16 w-16 text-primary" />
           <h2 className="mt-4 text-2xl font-bold">Properti Berhasil Disubmit!</h2>
-          <p className="mt-2 text-muted-foreground">Properti Anda sudah tersimpan di database dan langsung tayang.</p>
-          <Button className="mt-6" onClick={() => { setSubmitted(false); setForm(initial); setImages([]); }}>
+          <p className="mt-2 text-muted-foreground">Properti Anda sudah tersimpan dan foto telah diupload ke cloud.</p>
+          <Button className="mt-6" onClick={() => { setSubmitted(false); setForm(initial); setImageFiles([]); setImagePreviews([]); }}>
             Tambah Properti Lain
           </Button>
         </div>
@@ -130,7 +144,7 @@ export default function JualPropertiPage() {
       <Navbar />
       <div className="container max-w-3xl py-8">
         <h1 className="text-2xl font-bold sm:text-3xl">Jual Properti</h1>
-        <p className="mt-1 text-muted-foreground">Pasang iklan properti Anda secara gratis — langsung tersimpan di database</p>
+        <p className="mt-1 text-muted-foreground">Pasang iklan properti Anda secara gratis — foto tersimpan permanen di cloud</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -205,15 +219,15 @@ export default function JualPropertiPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Foto Properti (max 10)</label>
+            <label className="text-sm font-medium">Foto Properti (max 10) — disimpan permanen di cloud</label>
             <div className="mt-2 rounded-lg border-2 border-dashed p-6 text-center">
               <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-2 text-sm text-muted-foreground">Drag & drop atau klik untuk upload</p>
               <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="mt-2 text-sm" />
             </div>
-            {images.length > 0 && (
+            {imagePreviews.length > 0 && (
               <div className="mt-3 grid grid-cols-5 gap-2">
-                {images.map((img, i) => (
+                {imagePreviews.map((img, i) => (
                   <div key={i} className="group relative aspect-square overflow-hidden rounded-md">
                     <img src={img} alt="" className="h-full w-full object-cover" />
                     <button type="button" onClick={() => removeImage(i)} className="absolute right-1 top-1 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 group-hover:opacity-100">
@@ -246,7 +260,7 @@ export default function JualPropertiPage() {
               {showPreview ? "Tutup Preview" : "Preview"}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Menyimpan..." : "Submit Properti"}
+              {isSubmitting ? "Mengupload & Menyimpan..." : "Submit Properti"}
             </Button>
           </div>
         </form>
