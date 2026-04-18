@@ -455,6 +455,41 @@ export default function AdminPage() {
         />
       )}
 
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Hapus Properti?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Tindakan ini tidak dapat dibatalkan. Properti berikut akan dihapus secara permanen dari database:</p>
+                {deleteTarget && (
+                  <div className="flex items-center gap-3 rounded-md border bg-muted/40 p-3">
+                    <img src={deleteTarget.images[0]} alt="" className="h-14 w-20 rounded object-cover" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground line-clamp-1">{deleteTarget.title}</p>
+                      <p className="text-xs text-muted-foreground">{deleteTarget.kecamatan} • {formatPrice(deleteTarget.price)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Footer />
     </div>
   );
