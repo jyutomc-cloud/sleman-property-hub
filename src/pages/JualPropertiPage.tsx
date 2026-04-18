@@ -72,7 +72,7 @@ export default function JualPropertiPage() {
     if (!form.location.trim()) e.location = "Lokasi wajib diisi";
     if (!form.kecamatan) e.kecamatan = "Kecamatan wajib dipilih";
     if (!form.landArea || Number(form.landArea) <= 0) e.landArea = "Luas tanah wajib diisi";
-    if (form.description.length < 50) e.description = "Deskripsi minimal 50 karakter";
+    if (!form.description.trim()) e.description = "Deskripsi wajib diisi";
     if (!form.sellerName.trim()) e.sellerName = "Nama wajib diisi";
     if (!/^62\d{8,13}$/.test(form.sellerPhone)) e.sellerPhone = "Format nomor WA: 62xxx (contoh: 628123456789)";
     setErrors(e);
@@ -212,9 +212,8 @@ export default function JualPropertiPage() {
           )}
 
           <div>
-            <label className="text-sm font-medium">Deskripsi Lengkap * (min 50 karakter)</label>
+            <label className="text-sm font-medium">Deskripsi Lengkap *</label>
             <textarea value={form.description} onChange={(e) => set("description", e.target.value)} className={inputCls + " mt-1 h-32 py-2"} placeholder="Deskripsikan properti Anda secara detail..." />
-            <p className="mt-1 text-xs text-muted-foreground">{form.description.length}/50 karakter</p>
             {errors.description && <p className={errorCls}>{errors.description}</p>}
           </div>
 

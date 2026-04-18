@@ -7,7 +7,6 @@ const navItems = [
   { label: "Beranda", path: "/" },
   { label: "Properti", path: "/properti" },
   { label: "Tentang Kami", path: "/tentang" },
-  { label: "Kontak", path: "/kontak" },
 ];
 
 export default function Navbar() {
