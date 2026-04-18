@@ -257,6 +257,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "rumah" | "tanah">("all");
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
