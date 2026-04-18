@@ -310,14 +310,17 @@ export default function AdminPage() {
     }
   };
 
-  const deleteProperty = async (id: string, title: string) => {
-    if (!confirm(`Hapus properti "${title}"?`)) return;
-    const { error } = await supabase.from("properties").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("properties").delete().eq("id", deleteTarget.id);
+    setIsDeleting(false);
     if (error) {
       toast.error("Gagal menghapus properti");
     } else {
-      toast.success("Properti berhasil dihapus");
+      toast.success(`Properti "${deleteTarget.title}" berhasil dihapus`);
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      setDeleteTarget(null);
     }
   };
 
