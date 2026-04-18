@@ -426,7 +426,7 @@ export default function AdminPage() {
                         <Button variant="ghost" size="icon" onClick={() => toggleFeatured(p.id, p.featured)} title={p.featured ? "Hapus dari unggulan" : "Jadikan unggulan"}>
                           {p.featured ? <Star className="h-4 w-4 fill-amber-500 text-amber-500" /> : <StarOff className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteProperty(p.id, p.title)} title="Hapus" className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(p)} title="Hapus" className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
