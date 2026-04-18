@@ -11,6 +11,16 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface EditForm {
@@ -247,6 +257,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "rumah" | "tanah">("all");
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -298,14 +310,17 @@ export default function AdminPage() {
     }
   };
 
-  const deleteProperty = async (id: string, title: string) => {
-    if (!confirm(`Hapus properti "${title}"?`)) return;
-    const { error } = await supabase.from("properties").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("properties").delete().eq("id", deleteTarget.id);
+    setIsDeleting(false);
     if (error) {
       toast.error("Gagal menghapus properti");
     } else {
-      toast.success("Properti berhasil dihapus");
+      toast.success(`Properti "${deleteTarget.title}" berhasil dihapus`);
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      setDeleteTarget(null);
     }
   };
 
@@ -411,7 +426,7 @@ export default function AdminPage() {
                         <Button variant="ghost" size="icon" onClick={() => toggleFeatured(p.id, p.featured)} title={p.featured ? "Hapus dari unggulan" : "Jadikan unggulan"}>
                           {p.featured ? <Star className="h-4 w-4 fill-amber-500 text-amber-500" /> : <StarOff className="h-4 w-4" />}
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteProperty(p.id, p.title)} title="Hapus" className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(p)} title="Hapus" className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -439,6 +454,41 @@ export default function AdminPage() {
           }}
         />
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Hapus Properti?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Tindakan ini tidak dapat dibatalkan. Properti berikut akan dihapus secara permanen dari database:</p>
+                {deleteTarget && (
+                  <div className="flex items-center gap-3 rounded-md border bg-muted/40 p-3">
+                    <img src={deleteTarget.images[0]} alt="" className="h-14 w-20 rounded object-cover" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground line-clamp-1">{deleteTarget.title}</p>
+                      <p className="text-xs text-muted-foreground">{deleteTarget.kecamatan} • {formatPrice(deleteTarget.price)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>
